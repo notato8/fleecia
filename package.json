@@ -19,6 +19,7 @@
   },
   "homepage": "https://github.com/notato8/fleecia#readme",
   "dependencies": {
-    "discord.js": "^12.2.0"
+    "discord.js": "^12.2.0",
+    "pouchdb": "^7.2.1"
   }
 }
