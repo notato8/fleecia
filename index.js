@@ -12,50 +12,53 @@ client.login(keys.discordToken);
 // When Fleecia joins a server
 client.on("guildCreate", guild => {
     servers.get(guild.id)
-    .then(server => {
-
-    })
-    .catch(
+    .catch( () => {
         servers.put({
             _id: guild.id,
             name: guild.name,
             config: {},
             users: {},
-        })
-    );
-})
+        });
+    });
+});
 
 // When a message is sent
 client.on("message", message => {
     // If the message is a command
-    if (message.content.startsWith("/fleecia ")) {
-        let command = message.content.split(" ");
-        let response = [];
-        if (command[1] === "config") {
-            if (command[2] === "role") {
-                response.push("The Role Module allows me to automatically create permission-less roles for all members, or members of your choice. These roles can be customized by their associated members. By placing them above all other roles, these members can have complete freedom over the colors of their usernames, and have fun titles too!");
-                response.push("This module is currently disabled. To enable it, verify that the config settings are to your preference, then type `/fleecia config role enable`.");
-                response.push("Config settings:");
-                response.push("`/fleecia config role mode`: Choose whether to use a whitelist, blacklist, or neither. Current setting: Neither");
-                response.push("`/fleecia config role whitelist`: View and edit the whitelisted users and roles. Current number: 0");
-                response.push("`/fleecia config role blacklist`: View and edit the blacklisted users and roles. Current number: 0");
-                response.push("`/fleecia config role allowColors`: Choose whether users should be allowed to change their role colors. Current setting: Enabled");
-                response.push("`/fleecia config role allowNames`: Choose whether users should be allowed to change their role names. Current setting: Enabled");
-                response.push("`/fleecia config role resetColors`: Change the colors of all personal roles back to colorless.");
-                response.push("`/fleecia config role resetNames`: Change the names of all personal roles back to their usernames.");
-                response.push("`/fleecia config role default`: View the default config settings for this module, then confirm whether you would like to restore them.");
-            } else {
-                response.push("There are several modules. Any of them can be enabled or disabled at any time. Which one do you need help with?");
-                response.push("`/fleecia config role`: Give members personal customizable roles. Current setting: Disabled");
-                response.push("`/fleecia config info`: Allow users to edit their info in a custom database. Current setting: Disabled");
-            }            
-        } else {
-            response.push("Commands:");
-            response.push("`/fleecia setRoleColor`: Change the color of your personal role.");
-            response.push("`/fleecia setRoleName`: Change the name of your personal role.");
-            response.push("`/fleecia config`: View information about customizing modules. Admins only.");
-            response.push("`/fleecia reset`: Restore all config settings to default, and delete all information stored by Fleecia. Admins only.")
-        }
-        message.channel.send(response);
+    if (message.guild && (message.content.startsWith("/fleecia ") || message.content.startsWith("!fleecia "))) {
+        servers.get(message.guild.id)
+        .then(guild => {
+            const command = message.content.split(" ");
+            const response = [];
+            if (command[1] === "help") {
+                response.push("To see a full list of commands including administrator commands, see the GitHub page: <https://github.com/notato8/Fleecia/wiki/Commands>");
+                response.push("`help`: Returns a list of all enabled member commands in the server, if you have permission to use them.");
+                if (guild.config.enableRolemodule === true) {
+                    if (guild.config.roleModuleMode === "normal" || guild.config.roleModuleWhitelist.includes(message.author.id) || (guild.config.roleModuleMode === "blacklist" && !guild.config.roleModuleBlacklist.includes(message.author.id))) {
+                        if (guild.config.allowRoleColors === true) {
+                            response.push("`setRoleColor <color>`: Changes the color of your personal role.");
+                            response.push("`clearRoleColor`: Resets the color of your personal role to default (Discord's default role color)");
+                        }
+                        if (guild.config.allowRoleNames === true) {
+                            response.push("`setRoleName <string>`: Changes the name of your personal role.");
+                        }
+                    }
+                }
+                if (guild.config.enableInfoModule === true) {
+                    if (guild.config.infoModuleMode === "normal" || guild.config.infoModuleWhitelist.includes(message.author.id) || (guild.config.infoModuleMode === "blacklist" && !guild.config.infoModuleBlacklist.includes(message.author.id))) {
+                        response.push("`viewLabels`: Returns a list of all current information labels.");
+                        response.push("`setInfo <label> <string>`: Changes your display under an information label.");
+                        response.push("`clearInfo <label>`: Resets your display under an information label to empty.");
+                        response.push("`viewInfo <label>`: Returns all members' listings under a specific label.");
+                        response.push("`viewInfo <member>`: Returns all of a specific member's labels.");
+                        if (guild.config.enableGoogleSheets === true) {
+                            response.push("`viewInfo`: Returns a link to the Google Sheet.");
+                        }
+                    }
+;               }
+            }
+            if (message.content.startsWith("/")) message.author.send(response);
+            if (message.content.startsWith("!")) message.channel.send(response);
+        })  
     }
 })
