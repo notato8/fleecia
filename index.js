@@ -31,8 +31,12 @@ client.on("ready", () => { // When Fleecia starts up
     .then(server => {
         for (let i = 0; i < server.rows.length; i++) {
             defaultConfig.forEach(configSetting => { // For each config setting, if it doesn't already exist, create it and set it to the default.
-                if (!server.rows[i].doc.config.hasOwnProperty(configSetting.name)) {server.rows[i].doc.config[configSetting.name] = configSetting.default};
+                if (!server.rows[i].doc.config.hasOwnProperty(configSetting.name)) server.rows[i].doc.config[configSetting.name] = configSetting.default;
             });
+            const guild = client.guilds.cache.find(guild => guild.id === server.rows[i].doc._id) // For each member in the guild, if it isn't in the list, add it.
+            guild.members.cache.forEach(member => {
+                if (!server.rows[i].doc.users.some(user => user.id === member.id)) server.rows[i].doc.users.push({id: member.id});
+            })
             servers.put(server.rows[i].doc);
         };
     });
@@ -43,7 +47,6 @@ client.on("guildCreate", guild => { // When Fleecia joins a server
     .catch(() => { // If it isn't, add it.
         servers.put({
             _id: guild.id,
-            name: guild.name,
             config: {},
             users: [],
         });
@@ -52,6 +55,9 @@ client.on("guildCreate", guild => { // When Fleecia joins a server
             defaultConfig.forEach(configSetting => { // For each config setting, if it doesn't already exist, create it and set it to the default.
                 server.config[configSetting.name] = configSetting.default;
             });
+            guild.members.cache.forEach(member => {
+                server.users.push({id: member.id});
+            })
             servers.put(server);
         });
     });
@@ -85,7 +91,13 @@ client.on("message", message => { // When a message is sent
                 }
             }
             if (command[1] === "enableRoleModule") {
-                
+                if (command[2] === "true") {
+                    server.config.enableRoleModule = true;
+                }
+                if (command[2] === "false") {
+                    server.config.enableRoleModule = false;
+                }
+                servers.put(server);
             };
             if (command[1] === "help") {
                 response.push("To see a full list of commands, including administrator commands, see the GitHub page: <https://github.com/notato8/Fleecia/wiki/Commands>");
@@ -116,9 +128,9 @@ client.on("message", message => { // When a message is sent
             };
             if (command[1] === "restore") {
                 if (server.oldConfig) {
-                    confirm(message, "restore previous config settings", restore);
+                    confirm(message, "restore previous config settings and information", restore);
                 } else {
-                    response.push("No previous config settings found.");
+                    response.push("No previous config settings or information found.");
                 }
             }
             if (command[1] === "setRoleColor") {
@@ -143,7 +155,7 @@ function confirm(message, response, command) {
     if (message.content.startsWith("/")) {
         waitingForConfirmation.prefix = "/";
         waitingForConfirmation.command = command;
-        message.author.send("Are you sure you would like to " + response + "? If so, type `/fleecia confirm`.");
+        message.author.send("Are you sure you would like to " + response + "? If so, type `/fleecia confirm` in the server.");
     };
     if (message.content.startsWith("!")) {
         waitingForConfirmation.prefix = "!";
