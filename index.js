@@ -6,106 +6,98 @@ const serverDB = new PouchDB("servers")
 const client = new Discord.Client();
 client.login(keys.discordToken);
 
-
 client.on("ready", () => { console.log("Ready to start working.");
-    client.api.applications(client.user.id).guilds(keys.guildID).commands.post({data: {
-        name: "role",
-        description: "Changes personal role settings.",
-        options: [
-            {
-                name: "color",
-                description: "Changes personal role color.",
-                type: 2,
-                options: [
-                    {
-                        name: "set",
-                        description: "Sets personal role color.",
-                        type: 1,
-                        options: [
-                            {
-                                name: "color",
-                                description: "New hex color code",
-                                type: 3,
-                                required: true
-                            },
-                            {
-                                name: "user",
-                                description: "Target user",
-                                type: 6,
-                                required: false
-                            }
-                        ]
-                    },
-                    {
-                        name: "clear",
-                        description: "Clears personal role color.",
-                        type: 1,
-                        options: [
-                            {
-                                name: "user",
-                                description: "Target user",
-                                type: 6,
-                                required: false
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                name: "name",
-                description: "Changes personal role name.",
-                type: 2,
-                options: [
-                    {
-                        name: "set",
-                        description: "Sets personal role name.",
-                        type: 1,
-                        options: [
-                            {
-                                name: "name",
-                                description: "New name",
-                                type: 3,
-                                required: true
-                            },
-                            {
-                                name: "user",
-                                description: "Target user",
-                                type: 6,
-                                required: false
-                            }
-                        ]
-                    },
-                    {
-                        name: "clear",
-                        description: "Clears personal role name.",
-                        type: 1,
-                        options: [
-                            {
-                                name: "user",
-                                description: "Target user",
-                                type: 6,
-                                requried: false
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
-    }});
+
+    client.api.applications(client.user.id).guilds(keys.guildID).commands.get()
+    .then(console.log);
+    
+    client.api.applications(client.user.id).guilds(keys.guildID).commands.post({data:
+        { name: "role", description: "Changes personal role settings.", options: [
+            { name: "color", description: "Changes personal role color.", type: 2, options: [
+                { name: "set", description: "Sets personal role color.", type: 1, options: [
+                    { name: "color", description: "New hex color code", type: 3, required: true },
+                    { name: "user", description: "Target user", type: 6, required: false }
+                ]},
+                { name: "clear", description: "Clears personal role color.", type: 1, options: [
+                    { name: "user", description: "Target user", type: 6, required: false }
+                ]}
+            ]},
+            { name: "name", description: "Changes personal role name.", type: 2, options: [
+                { name: "set", description: "Sets personal role name.", type: 1, options: [
+                    { name: "name", description: "New name",  type: 3, required: true },
+                    { name: "user", description: "Target user", type: 6, required: false }
+                ]},
+                { name: "clear", description: "Clears personal role name.", type: 1, options: [
+                    { name: "user", description: "Target user", type: 6, requried: false }
+                ]}
+            ]},
+            { name: "link", description: "Links a role to a user.", type: 1, options: [
+                { name: "role", description: "The role", type: 8, required: true },
+                { name: "user", description: "Target user", type: 6, required: false }
+            ]},
+            { name: "unlink", description: "Unlinks a role from a user.", type: 1, options: [
+                { name: "role", description: "Target role", type: 8, required: false },
+                { name: "user", description: "Target user", type: 6, required: false }
+            ]},
+            { name: "query", description: "Posts personal role info.", type: 1, options: [
+                { name: "role", description: "Target role", type: 8, required: false },
+                { name: "user", description: "Target user", type: 6, required: false }
+            ]}
+        ]}
+    });
 
     client.ws.on("INTERACTION_CREATE", async interaction => {
-        const command = interaction.data.name.toLowerCase();
-        const args = interaction.data.options;
+        const command = interaction.data;
+        switch (command.name) {
 
-        if (command === "hello") {
-            client.api.interactions(interaction.id, interaction.token).callback.post({
-                data: {
-                    type: 4,
-                    data: {
-                        content: "Hello!"
-                    }
-                }
-            })
+            case "role": switch (command.options[0].name) {
+
+                case "color": switch (command.options[0].options[0].name) {
+
+                    case "set":
+                        client.api.interactions(interaction.id, interaction.token).callback.post({
+                            data: { type: 4, data: { content: "no" } }
+                        })
+                    break;
+                        
+                    case "clear":
+                        client.api.interactions(interaction.id, interaction.token).callback.post({
+                            data: { type: 4, data: { content: "no" } }
+                        })
+                    break;
+
+                } break;
+                    
+                case "name": switch (command.options[0].options[0].name) {
+                        
+                    case "set":
+                        client.api.interactions(interaction.id, interaction.token).callback.post({
+                            data: { type: 4, data: { content: "no" } }
+                        })
+                    break;
+
+                    case "clear":
+                        client.api.interactions(interaction.id, interaction.token).callback.post({
+                            data: { type: 4, data: { content: "no" } }
+                        })
+                    break;
+
+                } break;
+
+                case "link": 
+
+                break;
+
+                case "unlink":
+
+                break;
+
+                case "query":
+
+                break;
+
+            } break;
+
         }
     });
     
@@ -124,7 +116,7 @@ client.on("guildCreate", guild => {
     });
 });
 
-client.on("message", message => {
+/* client.on("message", message => {
     if (message.guild && (message.content.startsWith("/fleecia ") || message.content.startsWith("!fleecia "))) { // If the message is a command in a guild
         serverDB.get(message.guild.id).then(server => {
             const config = server.config;
@@ -175,7 +167,7 @@ client.on("message", message => {
             }
         });
     };
-});
+}); */
 
 function newServer(guild) {
     serverDB.put({
