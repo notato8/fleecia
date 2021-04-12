@@ -1,7 +1,7 @@
 {
   "name": "fleecia",
-  "version": "0.1.0",
-  "description": "",
+  "version": "0.2.0",
+  "description": "Discord bot for managing colorful, personal roles",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -19,7 +19,7 @@
   },
   "homepage": "https://github.com/notato8/fleecia#readme",
   "dependencies": {
-    "discord.js": "^12.2.0",
-    "pouchdb": "^7.2.1"
+    "discord.js": "^12.5.3",
+    "pouchdb": "^7.2.2"
   }
 }
