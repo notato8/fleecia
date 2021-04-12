@@ -86,7 +86,20 @@ client.on("ready", () => { console.log("Ready to start working.");
                 } break;
 
                 case "link": 
-
+                    getGuildDoc(guildID).then(guildDoc => {
+                        getUserIndex(guildID, userID).then(userIndex => {
+                            guildDoc.users[userIndex].roleID = command.options[0].options[0].value;
+                            guildDB.put(guildDoc);
+                        });
+                    });
+                    client.api.interactions(interaction.id, interaction.token).callback.post({
+                        data: { type: 4, data: { content: 
+                            "Linked role " + 
+                            client.guilds.cache.find(guild => guild.id === guildID).roles.cache.find(role => role.id === command.options[0].options[0].value).name +
+                            " to user " +
+                            interaction.member.user.username
+                         } }
+                    })
                 break;
 
                 case "unlink":
@@ -94,8 +107,7 @@ client.on("ready", () => { console.log("Ready to start working.");
                 break;
 
                 case "query":
-                    getGuild(guildID).then(console.log);
-                    console.log(getUser(guildID, userID));
+                    getGuildDoc(guildID).then(console.log);
                 break;
 
             } break;
@@ -105,26 +117,25 @@ client.on("ready", () => { console.log("Ready to start working.");
     
 });
 
-async function getGuild(guildID) {
+const getGuildDoc = (guildID) => {
     return guildDB.get(guildID)
     .catch(() => {
         guildDB.put({
             _id: guildID,
             users: [],
         })
-        .then(() => { return getGuild(guildID) });
+        .then(() => { return getGuildDoc(guildID) });
     });   
 }
 
-async function getUser(guildID, userID) {
-    await getGuild(guildID).then(guild => {
-        if (guild.users.some(user => user.id === userID)) {
-            console.log(guild.users.find(user => user.id === userID))
-            return guild.users.find(user => user.id === userID);
+const getUserIndex = (guildID, userID) => {
+    return getGuildDoc(guildID).then(guildDoc => {
+        if (guildDoc.users.some(user => user.id === userID)) {
+            return guildDoc.users.findIndex(user => user.id === userID);
         } else {
-            guild.users.push({id: userID});
-            guildDB.put(guild);
-            return getUser(guildID, userID);
+            guildDoc.users.push({id: userID});
+            guildDB.put(guildDoc);
+            return getUserIndex(guildID, userID);
         }
     })
 }
@@ -165,7 +176,7 @@ async function getUser(guildID, userID) {
             // const waitingForConfirmation = {};
 
             switch (command[1]) {
-
+ 
                 case "setRoleColor":
                     if (validate("role", config, authorID) && config.allowRoleColors === true) {
                         let foundRole = roles.find(role => role.id === server.users.find(user => authorID === user.id).roleID);
