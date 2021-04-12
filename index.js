@@ -2,14 +2,14 @@ import keys from "./keys.js"
 import Discord from "discord.js"
 import PouchDB from "pouchdb"
 
-const serverDB = new PouchDB("servers")
+const guildDB = new PouchDB("guilds")
 const client = new Discord.Client();
 client.login(keys.discordToken);
 
 client.on("ready", () => { console.log("Ready to start working.");
 
-    client.api.applications(client.user.id).guilds(keys.guildID).commands.get()
-    .then(console.log);
+    // client.api.applications(client.user.id).guilds(keys.guildID).commands.get()
+    // .then(console.log);
     
     client.api.applications(client.user.id).guilds(keys.guildID).commands.post({data:
         { name: "role", description: "Changes personal role settings.", options: [
@@ -36,11 +36,9 @@ client.on("ready", () => { console.log("Ready to start working.");
                 { name: "user", description: "Target user", type: 6, required: false }
             ]},
             { name: "unlink", description: "Unlinks a role from a user.", type: 1, options: [
-                { name: "role", description: "Target role", type: 8, required: false },
                 { name: "user", description: "Target user", type: 6, required: false }
             ]},
             { name: "query", description: "Posts personal role info.", type: 1, options: [
-                { name: "role", description: "Target role", type: 8, required: false },
                 { name: "user", description: "Target user", type: 6, required: false }
             ]}
         ]}
@@ -48,6 +46,9 @@ client.on("ready", () => { console.log("Ready to start working.");
 
     client.ws.on("INTERACTION_CREATE", async interaction => {
         const command = interaction.data;
+        const guildID = interaction.guild_id;
+        const userID = interaction.member.user.id;
+
         switch (command.name) {
 
             case "role": switch (command.options[0].name) {
@@ -93,7 +94,8 @@ client.on("ready", () => { console.log("Ready to start working.");
                 break;
 
                 case "query":
-
+                    getGuild(guildID).then(console.log);
+                    console.log(getUser(guildID, userID));
                 break;
 
             } break;
@@ -103,8 +105,44 @@ client.on("ready", () => { console.log("Ready to start working.");
     
 });
 
+function getGuild(guildID) {
+    return guildDB.get(guildID)
+    .catch(() => {
+        guildDB.put({
+            _id: guildID,
+            users: [],
+        });
+        return getGuild(guildID);
+    });   
+}
 
-client.on("guildCreate", guild => {
+function getUser(guildID, userID) {
+    getGuild(guildID).then(guild => {
+        if (guild.users.some(user => user.id === userID)) {
+            console.log(guild.users.find(user => user.id === userID))
+            return guild.users.find(user => user.id === userID);
+        } else {
+            guild.users.push({id: userID});
+            guildDB.put(guild);
+            return getUser(guildID, userID);
+        }
+    })
+}
+
+/* function newRole(guild, member, server) {
+    return guild.roles.create({ data: {
+        name: member.displayName,
+        permissions: [],
+        mentionable: true
+    }})
+    .then(role => {
+        member.roles.add(role);
+        server.users.find(user => user.id === member.id).role = role.id;
+    });
+} */
+
+
+/* client.on("guildCreate", guild => {
     // Check if the server is already in the database
     serverDB.get(guild.id).catch(() => newServer(guild));
 
@@ -114,7 +152,7 @@ client.on("guildCreate", guild => {
         })
         serverDB.put(server);
     });
-});
+}); */
 
 /* client.on("message", message => {
     if (message.guild && (message.content.startsWith("/fleecia ") || message.content.startsWith("!fleecia "))) { // If the message is a command in a guild
@@ -168,22 +206,3 @@ client.on("guildCreate", guild => {
         });
     };
 }); */
-
-function newServer(guild) {
-    serverDB.put({
-        _id: guild.id,
-        users: [],
-    });
-}
-
-function newRole(guild, member, server) {
-    return guild.roles.create({ data: {
-        name: member.displayName,
-        permissions: [],
-        mentionable: true
-    }})
-    .then(role => {
-        member.roles.add(role);
-        server.users.find(user => user.id === member.id).role = role.id;
-    });
-}
