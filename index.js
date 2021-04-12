@@ -105,19 +105,19 @@ client.on("ready", () => { console.log("Ready to start working.");
     
 });
 
-function getGuild(guildID) {
+async function getGuild(guildID) {
     return guildDB.get(guildID)
     .catch(() => {
         guildDB.put({
             _id: guildID,
             users: [],
-        });
-        return getGuild(guildID);
+        })
+        .then(() => { return getGuild(guildID) });
     });   
 }
 
-function getUser(guildID, userID) {
-    getGuild(guildID).then(guild => {
+async function getUser(guildID, userID) {
+    await getGuild(guildID).then(guild => {
         if (guild.users.some(user => user.id === userID)) {
             console.log(guild.users.find(user => user.id === userID))
             return guild.users.find(user => user.id === userID);
