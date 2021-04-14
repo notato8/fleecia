@@ -133,9 +133,9 @@ const getUserIndex = (guildID, userID) => {
         if (guildDoc.users.some(user => user.id === userID)) {
             return guildDoc.users.findIndex(user => user.id === userID);
         } else {
-            guildDoc.users.push({id: userID});
-            guildDB.put(guildDoc);
-            return getUserIndex(guildID, userID);
+            guildDoc.users.push({id: userID})
+            .then(guildDB.put(guildDoc)
+            .then(() => {return getUserIndex(guildID, userID)}));
         }
     })
 }
