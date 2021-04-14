@@ -44,6 +44,32 @@ client.on("ready", () => { console.log("Ready to start working.");
         ]}
     });
 
+    const getGuildDoc = (guildID) => {
+        return guildDB.get(guildID)
+        .catch(() => {
+            console.log("adding guild...")
+            return guildDB.put({
+                _id: guildID,
+                users: [],
+            })
+            .then(() => { return getGuildDoc(guildID) });
+        });   
+    }
+    
+    const getUserIndex = (guildID, userID) => {
+        return getGuildDoc(guildID).then(guildDoc => {
+            if (guildDoc.users.some(user => user.id === userID)) {
+                return guildDoc.users.findIndex(user => user.id === userID);
+            } else {
+                console.log("adding user...");
+                guildDoc.users.push({ id: userID });
+                console.log(guildDoc);
+                return guildDB.put(guildDoc)
+                .then(() => { return getUserIndex(guildID, userID) });
+            }
+        });
+    }
+
     client.ws.on("INTERACTION_CREATE", async interaction => {
         const command = interaction.data;
         const guildID = interaction.guild_id;
@@ -86,20 +112,26 @@ client.on("ready", () => { console.log("Ready to start working.");
                 } break;
 
                 case "link": 
-                    getGuildDoc(guildID).then(guildDoc => {
-                        getUserIndex(guildID, userID).then(userIndex => {
+                    console.log("linking...");
+
+                    await getUserIndex(guildID, userID).then(userIndex => {
+                        console.log("found user")
+                        getGuildDoc(guildID).then(guildDoc => {
+                            console.log(guildDoc.users[userIndex]);
+                            console.log("found guild")
+                            console.log(guildDoc);
                             guildDoc.users[userIndex].roleID = command.options[0].options[0].value;
                             guildDB.put(guildDoc);
                         });
                     });
-                    client.api.interactions(interaction.id, interaction.token).callback.post({
+                    /* client.api.interactions(interaction.id, interaction.token).callback.post({
                         data: { type: 4, data: { content: 
                             "Linked role " + 
                             client.guilds.cache.find(guild => guild.id === guildID).roles.cache.find(role => role.id === command.options[0].options[0].value).name +
                             " to user " +
                             interaction.member.user.username
                          } }
-                    })
+                    }) */
                 break;
 
                 case "unlink":
@@ -107,7 +139,8 @@ client.on("ready", () => { console.log("Ready to start working.");
                 break;
 
                 case "query":
-                    getGuildDoc(guildID).then(console.log);
+                    await getGuildDoc(guildID).then(console.log);
+                    getUserIndex(guildID, userID).then(console.log);
                 break;
 
             } break;
@@ -116,29 +149,6 @@ client.on("ready", () => { console.log("Ready to start working.");
     });
     
 });
-
-const getGuildDoc = (guildID) => {
-    return guildDB.get(guildID)
-    .catch(() => {
-        guildDB.put({
-            _id: guildID,
-            users: [],
-        })
-        .then(() => { return getGuildDoc(guildID) });
-    });   
-}
-
-const getUserIndex = (guildID, userID) => {
-    return getGuildDoc(guildID).then(guildDoc => {
-        if (guildDoc.users.some(user => user.id === userID)) {
-            return guildDoc.users.findIndex(user => user.id === userID);
-        } else {
-            guildDoc.users.push({id: userID})
-            .then(guildDB.put(guildDoc)
-            .then(() => {return getUserIndex(guildID, userID)}));
-        }
-    })
-}
 
 /* function newRole(guild, member, server) {
     return guild.roles.create({ data: {
