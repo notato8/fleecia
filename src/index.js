@@ -1,8 +1,8 @@
-import keys from "./keys.js"
+import keys from "../lib/keys.js"
 import Discord from "discord.js"
 import PouchDB from "pouchdb"
 
-const guildDB = new PouchDB("guilds")
+const guildDB = new PouchDB("./bin/guilds/");
 const client = new Discord.Client();
 client.login(keys.discordToken);
 
