@@ -75,66 +75,31 @@ client.on("ready", () => { console.log("Ready to start working.");
         let command = interaction.data;
 
         const guildID = interaction.guild_id;
-        let userID = interaction.member.user.id;
+        const author = interaction.member.user;
 
-        const checkUserID = (optionsIndex) => {
+        const userID = (optionsIndex) => {
             if (command.hasOwnProperty("options")) {
                 if (typeof command.options[optionsIndex] != "undefined") {
                     return command.options[optionsIndex].value;
                 }
             }
-            return userID;
+            return author.id;
         }
 
         switch (command.name) { 
-
             case "role": command = command.options[0]; switch (command.name) {
-
                 case "color": command = command.options[0]; switch (command.name) {
-
-                    case "set": 
-                        userID = checkUserID(1);
-                        role.setColor(guildID, userID, command.options[0].value);
-                    break;
-
-                    case "clear":
-                        userID = checkUserID(0);
-                        role.clearColor(guildID, userID);
-                    break;
-
+                    case "set": role.setColor(guildID, userID(1), command.options[0].value); break;
+                    case "clear": role.clearColor(guildID, userID(0)); break;
                 } break;
-                    
-                case "name": switch (command.options[0].name) {
-
-                    case "set": 
-                        userID = checkUserID(1);
-                        role.setName(guildID, userID, command.options[0].value); 
-                    break;
-
-                    case "clear": 
-                        userID = checkUserID(0);
-                        role.clearName(guildID, userID); 
-                    break;
-
+                case "name": command = command.options[0]; switch (command.name) {
+                    case "set": role.setName(guildID, userID(1), command.options[0].value); break;
+                    case "clear": role.clearName(guildID, userID(0)); break;
                 } break;
-
-                case "link": 
-                    userID = checkUserID(1);
-                    role.link(guildID, userID, command.options[0].value);
-                break;
-
-                case "unlink":
-                    userID = checkUserID(0);
-                    role.unlink(guildID, userID);
-                break;
-
-                case "query": 
-                    userID = checkUserID(0);
-                    role.query(guildID, userID);
-                break;
-
+                case "link": role.link(guildID, userID(1), command.options[0].value); break;
+                case "unlink": role.unlink(guildID, userID(0)); break;
+                case "query": role.query(guildID, userID(0)); break;
             } break;
-
         }
     });
     
