@@ -1,6 +1,6 @@
 {
   "name": "fleecia",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Discord bot for managing colorful, personal roles",
   "main": "index.js",
   "type": "module",
