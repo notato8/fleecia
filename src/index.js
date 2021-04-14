@@ -1,15 +1,42 @@
-import keys from "../lib/keys.js"
-import Discord from "discord.js"
-import PouchDB from "pouchdb"
+import keys from "../lib/keys.js";
 
-const guildDB = new PouchDB("./bin/guilds/");
+import * as role from "./role.js";
+
+import Discord from "discord.js";
+import PouchDB from "pouchdb";
+
+
+export const guildDB = new PouchDB("./bin/guilds/");
 const client = new Discord.Client();
 client.login(keys.discordToken);
 
-client.on("ready", () => { console.log("Ready to start working.");
 
-    // client.api.applications(client.user.id).guilds(keys.guildID).commands.get()
-    // .then(console.log);
+export function getGuildDoc(guildID) {
+    return guildDB.get(guildID)
+    .catch(() => {
+        console.log("adding guild...");
+        return guildDB.put({
+            _id: guildID,
+            users: [],
+        }).then(() => { return getGuildDoc(guildID) });
+    });   
+}
+
+export function getUserIndex(guildID, userID) {
+    return getGuildDoc(guildID).then(guildDoc => {
+        if (guildDoc.users.some(user => user.id === userID)) {
+            return guildDoc.users.findIndex(user => user.id === userID);
+        } else {
+            console.log("adding user...");
+            guildDoc.users.push({ id: userID });
+            return guildDB.put(guildDoc)
+            .then(() => { return getUserIndex(guildID, userID) });
+        }
+    });
+}
+
+
+client.on("ready", () => { console.log("Ready to start working.");
     
     client.api.applications(client.user.id).guilds(keys.guildID).commands.post({data:
         { name: "role", description: "Changes personal role settings.", options: [
@@ -44,32 +71,6 @@ client.on("ready", () => { console.log("Ready to start working.");
         ]}
     });
 
-    const getGuildDoc = (guildID) => {
-        return guildDB.get(guildID)
-        .catch(() => {
-            console.log("adding guild...")
-            return guildDB.put({
-                _id: guildID,
-                users: [],
-            })
-            .then(() => { return getGuildDoc(guildID) });
-        });   
-    }
-    
-    const getUserIndex = (guildID, userID) => {
-        return getGuildDoc(guildID).then(guildDoc => {
-            if (guildDoc.users.some(user => user.id === userID)) {
-                return guildDoc.users.findIndex(user => user.id === userID);
-            } else {
-                console.log("adding user...");
-                guildDoc.users.push({ id: userID });
-                console.log(guildDoc);
-                return guildDB.put(guildDoc)
-                .then(() => { return getUserIndex(guildID, userID) });
-            }
-        });
-    }
-
     client.ws.on("INTERACTION_CREATE", async interaction => {
         const command = interaction.data;
         const guildID = interaction.guild_id;
@@ -80,68 +81,20 @@ client.on("ready", () => { console.log("Ready to start working.");
             case "role": switch (command.options[0].name) {
 
                 case "color": switch (command.options[0].options[0].name) {
-
-                    case "set":
-                        client.api.interactions(interaction.id, interaction.token).callback.post({
-                            data: { type: 4, data: { content: "no" } }
-                        })
-                    break;
-                        
-                    case "clear":
-                        client.api.interactions(interaction.id, interaction.token).callback.post({
-                            data: { type: 4, data: { content: "no" } }
-                        })
-                    break;
-
+                    case "set": role.setColor(guildID, userID, command.options[0].options[0].options[0].value); break;
+                    case "clear": role.clearColor(guildID, userID); break;
                 } break;
                     
                 case "name": switch (command.options[0].options[0].name) {
-                        
-                    case "set":
-                        client.api.interactions(interaction.id, interaction.token).callback.post({
-                            data: { type: 4, data: { content: "no" } }
-                        })
-                    break;
-
-                    case "clear":
-                        client.api.interactions(interaction.id, interaction.token).callback.post({
-                            data: { type: 4, data: { content: "no" } }
-                        })
-                    break;
-
+                    case "set": role.setName(guildID, userID, command.options[0].options[0].options[0].value); break;
+                    case "clear": role.clearName(guildID, userID); break;
                 } break;
 
-                case "link": 
-                    console.log("linking...");
+                case "link": role.link(guildID, userID, command.options[0].options[0].value); break;
 
-                    await getUserIndex(guildID, userID).then(userIndex => {
-                        console.log("found user")
-                        getGuildDoc(guildID).then(guildDoc => {
-                            console.log(guildDoc.users[userIndex]);
-                            console.log("found guild")
-                            console.log(guildDoc);
-                            guildDoc.users[userIndex].roleID = command.options[0].options[0].value;
-                            guildDB.put(guildDoc);
-                        });
-                    });
-                    /* client.api.interactions(interaction.id, interaction.token).callback.post({
-                        data: { type: 4, data: { content: 
-                            "Linked role " + 
-                            client.guilds.cache.find(guild => guild.id === guildID).roles.cache.find(role => role.id === command.options[0].options[0].value).name +
-                            " to user " +
-                            interaction.member.user.username
-                         } }
-                    }) */
-                break;
+                case "unlink": role.unlink(guildID, userID); break;
 
-                case "unlink":
-
-                break;
-
-                case "query":
-                    await getGuildDoc(guildID).then(console.log);
-                    getUserIndex(guildID, userID).then(console.log);
-                break;
+                case "query": role.query(guildID, userID); break;
 
             } break;
 
