@@ -7,7 +7,7 @@ import PouchDB from "pouchdb";
 
 
 export const guildDB = new PouchDB("./db/guilds/");
-const client = new Discord.Client();
+export const client = new Discord.Client();
 client.login(keys.discordToken);
 
 
