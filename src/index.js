@@ -6,7 +6,7 @@ import Discord from "discord.js";
 import PouchDB from "pouchdb";
 
 
-export const guildDB = new PouchDB("./bin/guilds/");
+export const guildDB = new PouchDB("./db/guilds/");
 const client = new Discord.Client();
 client.login(keys.discordToken);
 
@@ -75,7 +75,8 @@ client.on("ready", () => { console.log("Ready to start working.");
         let command = interaction.data;
 
         const guildID = interaction.guild_id;
-        const author = interaction.member.user;
+        const author = interaction.member;
+
 
         const userID = (optionsIndex) => {
             if (command.hasOwnProperty("options")) {
@@ -83,7 +84,7 @@ client.on("ready", () => { console.log("Ready to start working.");
                     return command.options[optionsIndex].value;
                 }
             }
-            return author.id;
+            return author.user.id;
         }
 
         switch (command.name) { 
