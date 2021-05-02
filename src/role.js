@@ -3,50 +3,27 @@ import { getGuildDoc, getUserIndex } from "./index.js";
 import { client } from "./index.js";
 
 
-export async function setColor(guildID, userID, color) {
-    const guild = client.guilds.cache.find(guild => guild.id === guildID);
-    const roleID = await getGuildDoc(guildID).then(guildDoc => {
-        return guildDoc.users.find(user => user.id === userID).roleID;
+export async function setMemberColor(member, color) {
+    const roleID = await getGuildDoc(member.guild.id).then(guildDoc => {
+        return guildDoc.users.find(user => user.id === member.user.id).roleID;
     });
+    member.guild.roles.fetch(roleID).then(role => { role.setColor(color); });
 
-    const role = guild.roles.cache.find(role => role.id === roleID);
-    role.setColor(color);
+    return "Your color on this server has been changed to **" + color + "**.";
 }
 
-export async function clearColor(guildID, userID) {
-    const guild = client.guilds.cache.find(guild => guild.id === guildID);
-    const roleID = await getGuildDoc(guildID).then(guildDoc => {
-        return guildDoc.users.find(user => user.id === userID).roleID;
+export async function setMemberTitle(member, title) {
+    const roleID = await getGuildDoc(member.guild.id).then(guildDoc => {
+        return guildDoc.users.find(user => user.id === member.user.id).roleID;
     });
+    member.guild.roles.fetch(roleID).then(role => { role.setName(title); });
 
-    const role = guild.roles.cache.find(role => role.id === roleID);
-    role.setColor("000000");
+    return "Your title on this server has been changed to **" + title + "**.";
 }
 
-export async function setName(guildID, userID, name) {
-    const guild = client.guilds.cache.find(guild => guild.id === guildID);
-    const roleID = await getGuildDoc(guildID).then(guildDoc => {
-        return guildDoc.users.find(user => user.id === userID).roleID;
-    });
-
-    const role = guild.roles.cache.find(role => role.id === roleID);
-    role.setName(name);
-}
-
-export async function clearName(guildID, userID) {
-    const guild = client.guilds.cache.find(guild => guild.id === guildID);
-    const roleID = await getGuildDoc(guildID).then(guildDoc => {
-        return guildDoc.users.find(user => user.id === userID).roleID;
-    });
-
-    const member = await guild.members.fetch(userID).then(member => { return member; });
-    const role = guild.roles.cache.find(role => role.id === roleID);
-    role.setName(member.displayName);
-}
-
-export async function link(guildID, userID, roleID) {
-    getUserIndex(guildID, userID).then(userIndex => {
-        getGuildDoc(guildID).then(guildDoc => {
+export async function setMemberRole(member, roleID) {
+    getUserIndex(member.guild.id, member.user.id).then(userIndex => {
+        getGuildDoc(member.guild.id).then(guildDoc => {
             guildDoc.users[userIndex].roleID = roleID;
             guildDB.put(guildDoc);
         });
@@ -59,12 +36,4 @@ export async function link(guildID, userID, roleID) {
             interaction.member.user.username
          } }
     }) */
-}
-
-export async function unlink(guildID, userID) {
-
-}
-
-export async function query(guildID, userID) {
-    getGuildDoc(guildID).then(console.log);
 }

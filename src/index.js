@@ -14,7 +14,6 @@ client.login(keys.discordToken);
 export function getGuildDoc(guildID) {
     return guildDB.get(guildID)
     .catch(() => {
-        console.log("adding guild...");
         return guildDB.put({
             _id: guildID,
             users: [],
@@ -27,7 +26,6 @@ export function getUserIndex(guildID, userID) {
         if (guildDoc.users.some(user => user.id === userID)) {
             return guildDoc.users.findIndex(user => user.id === userID);
         } else {
-            console.log("adding user...");
             guildDoc.users.push({ id: userID });
             return guildDB.put(guildDoc)
             .then(() => { return getUserIndex(guildID, userID) });
@@ -36,7 +34,7 @@ export function getUserIndex(guildID, userID) {
 }
 
 
-client.on("ready", () => { console.log("Ready to start working.");
+client.on("ready", () => { console.log("Ready!");
     
     client.api.applications(client.user.id).guilds(keys.guildID).commands.post({ data:
         { name: "color", description: "Change color on this server.", options: [
@@ -56,33 +54,30 @@ client.on("ready", () => { console.log("Ready to start working.");
 
     client.ws.on("INTERACTION_CREATE", async interaction => {
         const command = interaction.data;
-        const guildID = interaction.guild_id;
-        const userID = interaction.member.user.id;
+        const member = await client.guilds.fetch(interaction.guild_id).then(guild => { 
+            return guild.members.fetch(interaction.member.user.id).then(member => { return member; })
+        });
 
-        // UNUSED: Determines user ID based on presence in command. Use author.user.id for now.
-        /* const userID = (optionsIndex) => {
-            if (command.hasOwnProperty("options")) {
-                if (typeof command.options[optionsIndex] != "undefined") {
-                    return command.options[optionsIndex].value;
-                }
+        const response = (async () => {
+            switch (command.name) { 
+                case "color": 
+                    if (command.hasOwnProperty("options")) return await role.setMemberColor(member, command.options[0].value);
+                    else return await role.setMemberColor(member, "000000");
+                case "title":
+                    if (command.hasOwnProperty("options")) return await role.setMemberTitle(member, command.options[0].value);
+                    else return await role.setMemberTitle(member, member.displayName);
+                case "role":
+                    if (command.hasOwnProperty("options")) return await role.setMemberRole(member, command.options[0].value);
+                    else return await role.setMemberRole(member, "0");
             }
-            return author.user.id;
-        } */
+        })();
 
-        switch (command.name) { 
-            case "color": 
-                if (command.hasOwnProperty("options")) role.setColor(guildID, userID, command.options[0].value);
-                else role.clearColor(guildID, userID);
-            break;
-            case "title":
-                if (command.hasOwnProperty("options")) role.setName(guildID, userID, command.options[0].value);
-                else role.clearName(guildID, userID);
-            break;
-            case "role":
-                if (command.hasOwnProperty("options")) role.link(guildId, userID, command.options[0].value);
-                else role.unlink(guildID, userID);
-            break;
-        }
+        client.api.interactions(interaction.id, interaction.token).callback.post({ data: {
+            type: 4, data: {
+                content: await response,
+                flags: 64
+            }
+        }});
     });
     
 });
