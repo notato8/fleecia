@@ -40,7 +40,6 @@ export async function clearName(guildID, userID) {
     });
 
     const member = await guild.members.fetch(userID).then(member => { return member; });
-    console.log(member);
     const role = guild.roles.cache.find(role => role.id === roleID);
     role.setName(member.displayName);
 }
