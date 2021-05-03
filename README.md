@@ -1,6 +1,6 @@
 # Fleecia
 
-Fleecia is a Discord bot for managing personal, colorful roles in your servers.
+Fleecia is a cosmetic Discord bot for managing personal, colorful roles in your servers.
 It's designed with a focus on servers of friends, to allow every member to customize their own color.
 They can also create their own "titles" by changing the name of these colorful roles.
 

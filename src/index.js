@@ -1,37 +1,12 @@
+import Discord from "discord.js";
+
 import keys from "../lib/keys.js";
 
 import * as role from "./role.js";
 
-import Discord from "discord.js";
-import PouchDB from "pouchdb";
 
-
-export const guildDB = new PouchDB("./db/guilds/");
 export const client = new Discord.Client();
 client.login(keys.discordToken);
-
-
-export function getGuildDoc(guildID) {
-    return guildDB.get(guildID)
-    .catch(() => {
-        return guildDB.put({
-            _id: guildID,
-            users: [],
-        }).then(() => { return getGuildDoc(guildID) });
-    });   
-}
-
-export function getUserIndex(guildID, userID) {
-    return getGuildDoc(guildID).then(guildDoc => {
-        if (guildDoc.users.some(user => user.id === userID)) {
-            return guildDoc.users.findIndex(user => user.id === userID);
-        } else {
-            guildDoc.users.push({ id: userID });
-            return guildDB.put(guildDoc)
-            .then(() => { return getUserIndex(guildID, userID) });
-        }
-    });
-}
 
 
 client.on("ready", () => { console.log("Ready!");
@@ -61,14 +36,23 @@ client.on("ready", () => { console.log("Ready!");
         const response = (async () => {
             switch (command.name) { 
                 case "color": 
-                    if (command.hasOwnProperty("options")) return await role.setMemberColor(member, command.options[0].value);
-                    else return await role.setMemberColor(member, "000000");
+                    if (command.hasOwnProperty("options")) {
+                        return await role.setMemberColor(member, command.options[0].value.toUpperCase());
+                    } else {
+                        return await role.setMemberColor(member, "000000");
+                    }
                 case "title":
-                    if (command.hasOwnProperty("options")) return await role.setMemberTitle(member, command.options[0].value);
-                    else return await role.setMemberTitle(member, member.displayName);
+                    if (command.hasOwnProperty("options")) {
+                        return await role.setMemberTitle(member, command.options[0].value);
+                    } else {
+                        return await role.setMemberTitle(member, member.displayName);
+                    }
                 case "role":
-                    if (command.hasOwnProperty("options")) return await role.setMemberRole(member, command.options[0].value);
-                    else return await role.setMemberRole(member, "0");
+                    if (command.hasOwnProperty("options")) {
+                        return await role.setMemberRole(member, command.options[0].value);
+                    } else {
+                        return await role.setMemberRole(member, "0");
+                    }
             }
         })();
 

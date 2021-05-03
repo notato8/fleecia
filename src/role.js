@@ -1,39 +1,40 @@
-import { guildDB } from "./index.js";
-import { getGuildDoc, getUserIndex } from "./index.js";
-import { client } from "./index.js";
+import * as db from "./db.js";
 
 
 export async function setMemberColor(member, color) {
-    const roleID = await getGuildDoc(member.guild.id).then(guildDoc => {
-        return guildDoc.users.find(user => user.id === member.user.id).roleID;
+    const roleID = await db.getGuild(member.guild).then(dbGuild => {
+        return dbGuild.members.find(dbMember => dbMember.id === member.user.id).roleID;
     });
     member.guild.roles.fetch(roleID).then(role => { role.setColor(color); });
 
-    return "Your color on this server has been changed to **" + color + "**.";
+    if (color === "000000" || color === "99AAB5") {
+        return "Your color on this server has been reset.";
+    } else {
+        return "Your color on this server has been changed to **" + color + "**.";
+    }
 }
 
 export async function setMemberTitle(member, title) {
-    const roleID = await getGuildDoc(member.guild.id).then(guildDoc => {
-        return guildDoc.users.find(user => user.id === member.user.id).roleID;
+    const roleID = await db.getGuild(member.guild).then(dbGuild => {
+        return dbGuild.members.find(dbMember => dbMember.id === member.user.id).roleID;
     });
     member.guild.roles.fetch(roleID).then(role => { role.setName(title); });
 
-    return "Your title on this server has been changed to **" + title + "**.";
+    if (title === member.displayName) {
+        return "Your title on this server has been reset.";
+    } else {
+        return "Your title on this server has been changed to **" + title + "**.";
+    }
 }
 
 export async function setMemberRole(member, roleID) {
-    getUserIndex(member.guild.id, member.user.id).then(userIndex => {
-        getGuildDoc(member.guild.id).then(guildDoc => {
-            guildDoc.users[userIndex].roleID = roleID;
-            guildDB.put(guildDoc);
+    db.getMemberIndex(member).then(dbMemberIndex => {
+        db.getGuild(member.guild).then(dbGuild => {
+            dbGuild.members[dbMemberIndex].roleID = roleID;
+            db.guildDB.put(dbGuild);
+            console.log(dbGuild);
         });
     });
-    /* client.api.interactions(interaction.id, interaction.token).callback.post({
-        data: { type: 4, data: { content: 
-            "Linked role " + 
-            client.guilds.cache.find(guild => guild.id === guildID).roles.cache.find(role => role.id === command.options[0].options[0].value).name +
-            " to user " +
-            interaction.member.user.username
-         } }
-    }) */
+    
+    return "success";
 }
