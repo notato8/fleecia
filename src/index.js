@@ -7,8 +7,9 @@ import { readGuilds } from "./guilds.js";
 import * as commands from "./commands.js";
 
 
-export const client = new Discord.Client();
+const client = new Discord.Client();
 client.login(keys.discordToken);
+
 readGuilds();
 
 
@@ -22,11 +23,6 @@ client.on("ready", () => { console.log("Ready!");
     client.api.applications(client.user.id).guilds(keys.guildID).commands.post({ data:
         { name: "title", description: "Change title on this server.", options: [
             { name: "new_title", description: "New title", type: 3, required: false }
-        ]}
-    });
-    client.api.applications(client.user.id).guilds(keys.guildID).commands.post({ data:
-        { name: "role", description: "Change linked role on this server.", options: [
-            { name: "new_role", description: "New role", type: 8, required: false }
         ]}
     });
 
@@ -50,12 +46,6 @@ client.on("ready", () => { console.log("Ready!");
                         return await commands.title(member, command.options[0].value);
                     } else {
                         return await commands.title(member, member.displayName);
-                    }
-                case "role":
-                    if (command.hasOwnProperty("options")) {
-                        return await commands.role(member, command.options[0].value);
-                    } else {
-                        return await commands.role(member, "0");
                     }
             }
         })();
