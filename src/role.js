@@ -32,7 +32,6 @@ export async function setMemberRole(member, roleID) {
         db.getGuild(member.guild).then(dbGuild => {
             dbGuild.members[dbMemberIndex].roleID = roleID;
             db.guildDB.put(dbGuild);
-            console.log(dbGuild);
         });
     });
     
