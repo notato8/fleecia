@@ -1,5 +1,4 @@
 import Discord from "discord.js";
-import fs from "fs";
 
 import keys from "./keys.js";
 import { readGuilds } from "./guilds.js";
